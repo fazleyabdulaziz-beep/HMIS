@@ -193,49 +193,80 @@ loadDashboard(); })
   $("logout").onclick = function () { sessionStorage.removeItem("hmis"); sess = null; show("login"); };
 
   // ---- Browse list (needs sign-in) ----
-  function loadList() {
+   function loadList() {
     msg("list-msg", "Loading…");
+
     api("list", { q: $("q").value }, true).then(function (items) {
-      var box = $("items"); box.textContent = ""; msg("list-msg", "");
-      if (!items.length) { box.appendChild(el("div", "empty", "No items found.")); return; }
+      var box = $("items");
+      box.textContent = "";
+      msg("list-msg", "");
+
+      if (!items.length) {
+        box.appendChild(el("div", "empty", "No items found."));
+        return;
+      }
+
       items.forEach(function (it) {
-        var c = el("div", "card"); c.tabIndex = 0;
-        if (it.image_url) { var im = el("img"); im.src = it.image_url; im.alt = ""; c.appendChild(im); }
-        var t = el("div"); t.style.flex = "1";
-        t.appendChild(el("div", "", it.item_id + " – " + it.item_name)); t.appendChild(el("small", "", it.location));
+        var c = el("div", "card");
+        c.tabIndex = 0;
+
+        if (it.image_url) {
+          var im = el("img");
+          im.src = it.image_url;
+          im.alt = "";
+          c.appendChild(im);
+        }
+
+        var t = el("div");
+        t.style.flex = "1";
+        t.appendChild(el("div", "", it.item_id + " – " + it.item_name));
+        t.appendChild(el("small", "", it.location));
         c.appendChild(t);
+
         var state = getStockState(it);
 
-var balanceClass = state === "normal"
-  ? "bal"
-  : "bal low";
+        var balanceClass = state === "normal"
+          ? "bal"
+          : "bal low";
 
-var b = el(
-  "div",
-  balanceClass,
-  it.balance + " " + it.unit
-);
+        var b = el(
+          "div",
+          balanceClass,
+          it.balance + " " + it.unit
+        );
 
-c.appendChild(b);
+        c.appendChild(b);
 
-if (state !== "normal") {
-  var label = state === "out"
-    ? "OUT OF STOCK"
-    : "LOW STOCK";
+        if (state !== "normal") {
+          var label = state === "out"
+            ? "OUT OF STOCK"
+            : "LOW STOCK";
 
-  b.appendChild(el("br"));
-  b.appendChild(el("small", "low", label));
-}
-        c.onclick = function () { openItem(it.item_id); };
+          b.appendChild(el("br"));
+          b.appendChild(el("small", "low", label));
+        }
+
+        c.onclick = function () {
+          openItem(it.item_id);
+        };
+
         box.appendChild(c);
       });
-    }).catch(function (e) { msg("list-msg", e.message, true); if (e.code === "AUTH" || e.code === "LOCKED") { sess = null; sessionStorage.removeItem("hmis"); show("login"); } });
+    }).catch(function (e) {
+      msg("list-msg", e.message, true);
+
+      if (e.code === "AUTH" || e.code === "LOCKED") {
+        sess = null;
+        sessionStorage.removeItem("hmis");
+        show("login");
+      }
+    });
   }
 
-   {
-  var box = $("dashboard-alerts");
-
-  box.innerHTML = '<p class="empty">Loading inventory...</p>';
+  $("q").oninput = function () {
+    clearTimeout(timer);
+    timer = setTimeout(loadList, 300);
+  };
 
   $("q").oninput = function () { clearTimeout(timer); timer = setTimeout(loadList, 300); };
 
