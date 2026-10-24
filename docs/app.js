@@ -223,26 +223,6 @@ var API = (window.HMIS_CONFIG || {}).API_URL;
       }, 250);
     };
 
-b.appendChild(qrSection);
-  }
-  function loadHistory() {   // history is protected: shown only if signed in
-    $("hist").hidden = !sess; if (!sess) return;
-    ["in", "out"].forEach(function (type) {
-      var box = $("h-" + type); box.textContent = "";
-      api("history", { type: type, item_id: current.item_id, limit: 10 }, true).then(function (rows) {
-        if (!rows.length) return box.appendChild(el("div", "empty", "No transactions yet."));
-        rows.forEach(function (r) {
-          var txt = new Date(r.timestamp).toLocaleString() + " • qty " + r.qty + " • by " + r.staff_id + " • balance " + r.balance_after;
-          if (type === "out") txt += " • " + r.location_used + " / " + r.purpose;
-          box.appendChild(el("div", "row", txt));
-        });
-      }).catch(function (e) { box.appendChild(el("div", "err", e.message)); });
-    });
-  }
-  $("back").onclick = function () { if (sess) { show("list"); loadList(); } else show("login"); };
-  $("b-in").onclick = function () { openForm("in"); };
-  $("b-out").onclick = function () { openForm("out"); };
-
   // ---- Stock form: Staff ID + PIN are entered HERE, at submit time ----
   function field(f, label, name, attrs) {
     var l = el("label", "", label), i = el("input"); i.name = name;
@@ -279,9 +259,15 @@ b.appendChild(qrSection);
     };
   }
 
-  // ---- Start: QR link (?item=ID) opens the item directly, no sign-in ----
-  var qid = new URLSearchParams(location.search).get("item");
-  if (qid) openItem(qid.trim().toUpperCase());
-  else if (sess && sess.pin) { show("list"); loadList(); }
-  else show("login");
+  // ---- Start: QR link (?item=ID) opens the item directly ----
+var qid = new URLSearchParams(window.location.search).get("item");
+
+if (qid) {
+  openItem(qid.trim().toUpperCase());
+} else if (sess && sess.pin) {
+  show("list");
+  loadList();
+} else {
+  show("login");
+}
 })();
