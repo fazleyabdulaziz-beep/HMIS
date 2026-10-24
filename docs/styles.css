@@ -617,3 +617,161 @@ video {
     margin-top: 25px;
   }
 }
+
+/* ===== HMIS Dashboard ===== */
+
+.dashboard-heading {
+  margin-bottom: 22px;
+}
+
+.dashboard-heading h2 {
+  margin-bottom: 4px;
+}
+
+.dashboard-heading p {
+  margin-top: 0;
+  color: var(--muted);
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin: 22px 0;
+}
+
+.stat-card {
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.stat-card span {
+  display: block;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.stat-card strong {
+  display: block;
+  margin-top: 8px;
+  font-size: 30px;
+  line-height: 1.2;
+}
+
+/* Red is the only warning/status color for low and empty stock. */
+
+.stock-alert,
+.low,
+.out-of-stock,
+.alert-status {
+  color: #ff3030 !important;
+}
+
+.stat-card.stock-alert {
+  border-color: #ff3030;
+}
+
+.dashboard-panel {
+  margin-top: 24px;
+  padding: 22px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.dashboard-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.dashboard-panel-head h3 {
+  margin: 0;
+}
+
+.dashboard-alert {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  width: 100%;
+  margin: 8px 0;
+  padding: 14px;
+  border: 1px solid #ff3030;
+  border-radius: 12px;
+  background: var(--surface-2);
+  text-align: left;
+}
+
+.dashboard-alert:hover {
+  border-color: #ff3030;
+  background: var(--surface-hover);
+}
+
+.alert-info {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 120px;
+}
+
+.alert-info small {
+  margin-top: 4px;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.alert-status {
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.alert-balance {
+  font-weight: 700;
+}
+
+.bal.low,
+.bal.ok {
+  color: var(--text);
+}
+
+.bal.low,
+.bal.low small,
+.bal.out-of-stock {
+  color: #ff3030 !important;
+}
+
+@media (max-width: 700px) {
+  .dashboard-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .stat-card {
+    padding: 15px;
+  }
+
+  .stat-card strong {
+    font-size: 25px;
+  }
+
+  .dashboard-panel {
+    padding: 15px;
+  }
+
+  .dashboard-panel-head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .dashboard-panel-head button {
+    width: 100%;
+  }
+}

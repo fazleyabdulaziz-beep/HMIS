@@ -48,7 +48,13 @@ var API = (window.HMIS_CONFIG || {}).API_URL;
   try { sess = JSON.parse(sessionStorage.getItem("hmis") || "null"); } catch (e) {}
 
   function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; }
-  function show(id) { ["login", "list", "detail"].forEach(function (s) { $(s).hidden = s !== id; }); $("logout").hidden = !sess; }
+  function show(id) {
+  ["login", "dashboard", "list", "detail"].forEach(function (s) {
+    $(s).hidden = s !== id;
+  });
+
+  $("logout").hidden = !sess;
+}
   function msg(id, text, bad) { $(id).textContent = text || ""; $(id).className = "msg " + (bad ? "err" : "ok"); }
   function uuid() { return (self.crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now()) + Math.random(); }
 
@@ -62,12 +68,126 @@ var API = (window.HMIS_CONFIG || {}).API_URL;
       .then(function (j) { if (!j.ok) { var e = new Error(j.error.message); e.code = j.error.code; throw e; } return j.data; });
   }
 
+  function getStockState(it) {
+  var balance = Number(it.balance) || 0;
+  var minimum = Number(it.min_stock) || 0;
+
+  if (balance <= 0) {
+    return "out";
+  }
+
+  if (it.low_stock || (minimum > 0 && balance <= minimum)) {
+    return "low";
+  }
+
+  return "normal";
+}
+function loadDashboard() {
+  var alertBox = $("dashboard-alerts");
+
+  alertBox.textContent = "";
+  alertBox.appendChild(
+    el("div", "empty", "Loading inventory...")
+  );
+
+  api("list", { q: "" }, true)
+    .then(function (items) {
+      var lowItems = [];
+      var outItems = [];
+      var normalCount = 0;
+
+      items.forEach(function (it) {
+        var state = getStockState(it);
+
+        if (state === "out") {
+          outItems.push(it);
+        } else if (state === "low") {
+          lowItems.push(it);
+        } else {
+          normalCount++;
+        }
+      });
+
+      $("stat-total").textContent = items.length;
+      $("stat-instock").textContent = normalCount;
+      $("stat-low").textContent = lowItems.length;
+      $("stat-out").textContent = outItems.length;
+
+      alertBox.textContent = "";
+
+      var alerts = outItems.concat(lowItems);
+
+      if (!alerts.length) {
+        alertBox.appendChild(
+          el("div", "empty", "No stock alerts.")
+        );
+        return;
+      }
+
+      alerts.forEach(function (it) {
+        var state = getStockState(it);
+        var row = el("button", "dashboard-alert stock-alert");
+
+        row.type = "button";
+
+        var info = el("div", "alert-info");
+
+        info.appendChild(
+          el("strong", "", it.item_name)
+        );
+
+        info.appendChild(
+          el("small", "", it.item_id + " • " + it.location)
+        );
+
+        var status = state === "out"
+          ? "OUT OF STOCK"
+          : "LOW STOCK";
+
+        var badge = el("span", "alert-status", status);
+
+        var balance = el(
+          "div",
+          "alert-balance",
+          "Balance: " + it.balance + " " + it.unit
+        );
+
+        row.appendChild(info);
+        row.appendChild(badge);
+        row.appendChild(balance);
+
+        row.onclick = function () {
+          openItem(it.item_id);
+        };
+
+        alertBox.appendChild(row);
+      });
+    })
+    .catch(function (e) {
+      alertBox.textContent = "";
+
+      alertBox.appendChild(
+        el("div", "err", "Unable to load dashboard: " + e.message)
+      );
+    });
+}
+
+$("dash-browse").onclick = function () {
+  show("list");
+  loadList();
+};
+
+$("list-dashboard").onclick = function () {
+  show("dashboard");
+  loadDashboard();
+};
   // ---- Optional sign-in (browse/search only) ----
   $("l-go").onclick = function () {
     var id = $("l-id").value.trim().toUpperCase(), pin = $("l-pin").value;
     if (!id || !pin) return msg("l-msg", "Enter staff ID and PIN.", true);
     sess = { staff_id: id, pin: pin }; $("l-go").disabled = true; msg("l-msg", "Signing in…");
-    api("login", {}, true).then(function (u) { sess.name = u.name; sess.role = u.role; sessionStorage.setItem("hmis", JSON.stringify(sess)); $("l-pin").value = ""; show("list"); loadList(); })
+    api("login", {}, true).then(function (u) { sess.name = u.name; sess.role = u.role; sessionStorage.setItem("hmis", JSON.stringify(sess)); $("l-pin").value = ""; show("dashboard");
+loadDashboard(); })
       .catch(function (e) { sess = null; msg("l-msg", e.message, true); }).then(function () { $("l-go").disabled = false; });
   };
   $("logout").onclick = function () { sessionStorage.removeItem("hmis"); sess = null; show("login"); };
@@ -84,13 +204,39 @@ var API = (window.HMIS_CONFIG || {}).API_URL;
         var t = el("div"); t.style.flex = "1";
         t.appendChild(el("div", "", it.item_id + " – " + it.item_name)); t.appendChild(el("small", "", it.location));
         c.appendChild(t);
-        var b = el("div", "bal " + (it.low_stock ? "low" : ""), it.balance + " " + it.unit); c.appendChild(b);
-        if (it.low_stock) { b.appendChild(el("br")); b.appendChild(el("small", "low", "LOW")); }
+        var state = getStockState(it);
+
+var balanceClass = state === "normal"
+  ? "bal"
+  : "bal low";
+
+var b = el(
+  "div",
+  balanceClass,
+  it.balance + " " + it.unit
+);
+
+c.appendChild(b);
+
+if (state !== "normal") {
+  var label = state === "out"
+    ? "OUT OF STOCK"
+    : "LOW STOCK";
+
+  b.appendChild(el("br"));
+  b.appendChild(el("small", "low", label));
+}
         c.onclick = function () { openItem(it.item_id); };
         box.appendChild(c);
       });
     }).catch(function (e) { msg("list-msg", e.message, true); if (e.code === "AUTH" || e.code === "LOCKED") { sess = null; sessionStorage.removeItem("hmis"); show("login"); } });
   }
+
+   {
+  var box = $("dashboard-alerts");
+
+  box.innerHTML = '<p class="empty">Loading inventory...</p>';
+
   $("q").oninput = function () { clearTimeout(timer); timer = setTimeout(loadList, 300); };
 
   // ---- Item page (public view; this is what a QR scan opens) ----
@@ -308,8 +454,8 @@ var qid = new URLSearchParams(window.location.search).get("item");
 if (qid) {
   openItem(qid.trim().toUpperCase());
 } else if (sess && sess.pin) {
-  show("list");
-  loadList();
+  show("dashboard");
+  loadDashboard();
 } else {
   show("login");
 }

@@ -30,10 +30,61 @@
     <label>PIN<input id="l-pin" type="password" inputmode="numeric" autocomplete="current-password"></label>
     <button id="l-go" class="primary">Sign in</button><p class="msg" id="l-msg"></p>
   </section>
-  <section id="list" hidden>
-    <input id="q" type="search" placeholder="Search item ID or name" aria-label="Search">
-    <p class="msg" id="list-msg"></p><div id="items"></div>
-  </section>
+  <section id="dashboard" hidden>
+  <div class="dashboard-heading">
+    <h2>Inventory Dashboard</h2>
+    <p>Hotel maintenance stock overview</p>
+  </div>
+
+  <div class="dashboard-grid">
+    <article class="stat-card">
+      <span>Total Items</span>
+      <strong id="stat-total">0</strong>
+    </article>
+
+<article class="stat-card">
+  <span>In Stock</span>
+  <strong id="stat-instock">0</strong>
+</article>
+
+<article class="stat-card stock-alert">
+  <span>Low Stock</span>
+  <strong id="stat-low">0</strong>
+</article>
+
+<article class="stat-card stock-alert">
+  <span>Out of Stock</span>
+  <strong id="stat-out">0</strong>
+</article>
+
+  </div>
+
+  <div class="dashboard-panel">
+    <div class="dashboard-panel-head">
+      <h3>Stock Alerts</h3>
+      <button id="dash-browse" class="primary" type="button">
+        Browse Inventory
+      </button>
+    </div>
+
+<div id="dashboard-alerts">
+  <p class="empty">Loading inventory...</p>
+</div>
+
+  </div>
+</section>
+ <section id="list" hidden>
+  <button id="list-dashboard" type="button">
+    ← Dashboard
+  </button>
+
+  <input id="q" type="search"
+    placeholder="Search item ID or name"
+    aria-label="Search">
+
+  <p class="msg" id="list-msg"></p>
+  <div id="items"></div>
+</section>
   <section id="detail" hidden>
     <button id="back">Search all items</button>
     <div id="d-body"></div>
