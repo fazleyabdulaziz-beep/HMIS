@@ -1,7 +1,49 @@
 (function () {
   "use strict";
-  var $ = function (id) { return document.getElementById(id); };
-  var API = (window.HMIS_CONFIG || {}).API_URL;
+ var $ = function (id) {
+  return document.getElementById(id);
+};
+
+var themeToggle = $("theme-toggle");
+
+function applyTheme(theme) {
+  theme = theme === "light" ? "light" : "dark";
+
+  document.documentElement.setAttribute("data-theme", theme);
+
+  if (themeToggle) {
+    themeToggle.textContent = theme === "dark" ? "☀" : "☾";
+    themeToggle.title =
+      theme === "dark" ? "Switch to light mode" : "Switch to dark mode";
+    themeToggle.setAttribute(
+      "aria-label",
+      theme === "dark" ? "Switch to light mode" : "Switch to dark mode"
+    );
+  }
+
+  try {
+    localStorage.setItem("hmis_theme", theme);
+  } catch (e) {}
+}
+
+var savedTheme = "dark";
+
+try {
+  savedTheme = localStorage.getItem("hmis_theme") || "dark";
+} catch (e) {}
+
+applyTheme(savedTheme);
+
+if (themeToggle) {
+  themeToggle.onclick = function () {
+    var currentTheme =
+      document.documentElement.getAttribute("data-theme") || "dark";
+
+    applyTheme(currentTheme === "dark" ? "light" : "dark");
+  };
+}
+
+var API = (window.HMIS_CONFIG || {}).API_URL;
   var sess = null, current = null, busy = false, timer;
   try { sess = JSON.parse(sessionStorage.getItem("hmis") || "null"); } catch (e) {}
 
@@ -64,86 +106,122 @@
     b.appendChild(el("p", "", "Item ID: " + it.item_id + " | " + it.category));
     b.appendChild(el("p", "bal " + (it.low_stock ? "low" : "ok"), "Balance: " + it.balance + " " + it.unit + (it.low_stock ? " ⚠ LOW STOCK" : "")));
     b.appendChild(el("p", "", "Minimum stock: " + it.min_stock + " | Location: " + it.location));
-    // ---- QR Code Generator ----
-var qrSection = el("div", "qr-section");
+    // QR label: generate only when the print icon is clicked.
+    // QR is never displayed in the item page.
 
-qrSection.appendChild(el("h3", "", "Item QR Code"));
-qrSection.appendChild(
-  el("p", "", "Scan to open this inventory item.")
-);
+    var qrActions = el("div", "item-tools");
+    var qrBtn = el("button", "icon-button qr-print-btn");
 
-var qrBox = el("div", "qr-box");
-qrSection.appendChild(qrBox);
+    qrBtn.type = "button";
+    qrBtn.title = "Print QR label";
+    qrBtn.setAttribute("aria-label", "Print QR label");
 
-var itemUrl = new URL(window.location.href);
-itemUrl.search = "";
-itemUrl.hash = "";
-itemUrl.searchParams.set("item", it.item_id);
+    qrBtn.innerHTML =
+      '<svg viewBox="0 0 24 24" fill="none" ' +
+      'stroke="currentColor" stroke-width="1.8" ' +
+      'stroke-linecap="round" stroke-linejoin="round" ' +
+      'aria-hidden="true">' +
+      '<rect x="3" y="3" width="7" height="7" rx="1"/>' +
+      '<rect x="14" y="3" width="7" height="7" rx="1"/>' +
+      '<rect x="3" y="14" width="7" height="7" rx="1"/>' +
+      '<path d="M14 14h3v3h-3zM20 14v2M17 20h4M20 18v3"/>' +
+      '</svg>';
 
-if (typeof QRCode !== "undefined") {
-  new QRCode(qrBox, {
-    text: itemUrl.toString(),
-    width: 200,
-    height: 200,
-    correctLevel: QRCode.CorrectLevel.M
-  });
-} else {
-  qrBox.textContent = "QR library unavailable. Check your internet connection.";
-}
+    qrActions.appendChild(qrBtn);
+    b.appendChild(qrActions);
 
-qrSection.appendChild(
-  el("p", "", "Item ID: " + it.item_id)
-);
+    qrBtn.onclick = function () {
+      if (typeof QRCode === "undefined") {
+        alert("QR library unavailable. Check your internet connection.");
+        return;
+      }
 
-var printBtn = el("button", "primary", "Print QR Label");
-qrSection.appendChild(printBtn);
+      // Open the print window immediately to avoid popup blocking.
+      var printWindow = window.open("", "_blank");
 
-printBtn.onclick = function () {
-  var printWindow = window.open("", "_blank");
+      if (!printWindow) {
+        alert("Please allow pop-ups to print the QR label.");
+        return;
+      }
 
-  if (!printWindow) {
-    alert("Please allow pop-ups to print the QR label.");
-    return;
-  }
+      // Generate the QR off-screen, not inside the visible page.
+      var temp = document.createElement("div");
+      temp.style.position = "fixed";
+      temp.style.left = "-10000px";
+      temp.style.top = "0";
+      document.body.appendChild(temp);
 
-  var qrImage = qrBox.querySelector("img");
-  var qrCanvas = qrBox.querySelector("canvas");
-  var imageUrl = qrImage
-    ? qrImage.src
-    : qrCanvas
-      ? qrCanvas.toDataURL("image/png")
-      : "";
+      var itemUrl = new URL(window.location.href);
+      itemUrl.search = "";
+      itemUrl.hash = "";
+      itemUrl.searchParams.set("item", it.item_id);
 
-  if (!imageUrl) {
-    printWindow.close();
-    alert("QR Code is not ready yet.");
-    return;
-  }
+      new QRCode(temp, {
+        text: itemUrl.toString(),
+        width: 320,
+        height: 320,
+        correctLevel: QRCode.CorrectLevel.M
+      });
 
-  var label = printWindow.document;
+      window.setTimeout(function () {
+        var canvas = temp.querySelector("canvas");
+        var image = temp.querySelector("img");
 
-  label.open();
-  label.write(
-    "<!doctype html><html><head><title>HMIS QR Label</title>" +
-    "<style>" +
-    "body{font-family:Arial;text-align:center;padding:20px}" +
-    ".label{border:1px solid #ccc;padding:16px;display:inline-block}" +
-    "img{width:200px;height:200px}" +
-    "h2{font-size:18px;margin:8px 0}" +
-    "p{font-size:12px;overflow-wrap:anywhere}" +
-    "@media print{.label{border:none}}" +
-    "</style></head><body>" +
-    "<div class='label'>" +
-    "<h2>HMIS</h2>" +
-    "<img src='" + imageUrl + "'>" +
-    "<h2>" + it.item_id.replace(/[&<>\"']/g, "") + "</h2>" +
-    "<p>" + String(it.item_name).replace(/[&<>\"']/g, "") + "</p>" +
-    "</div>" +
-    "<script>window.onload=function(){setTimeout(function(){window.print()},300)};<\/script>" +
-    "</body></html>"
-  );
-  label.close();
-};
+        var imageUrl = canvas
+          ? canvas.toDataURL("image/png")
+          : image
+            ? image.src
+            : "";
+
+        temp.remove();
+
+        if (!imageUrl) {
+          printWindow.close();
+          alert("QR Code could not be generated.");
+          return;
+        }
+
+        function escapeHtml(value) {
+          return String(value).replace(/[&<>"']/g, function (c) {
+            return {
+              "&": "&amp;",
+              "<": "&lt;",
+              ">": "&gt;",
+              '"': "&quot;",
+              "'": "&#39;"
+            }[c];
+          });
+        }
+
+        printWindow.document.open();
+        printWindow.document.write(
+          "<!doctype html><html><head>" +
+          "<meta charset='utf-8'>" +
+          "<meta name='viewport' content='width=device-width,initial-scale=1'>" +
+          "<title>HMIS QR Label</title>" +
+          "<style>" +
+          "body{font-family:Arial,sans-serif;text-align:center;padding:20px;color:#111}" +
+          ".label{width:280px;max-width:100%;margin:auto;padding:16px;border:1px solid #ccc;border-radius:10px}" +
+          "img{display:block;width:220px;height:220px;margin:12px auto}" +
+          "h2{font-size:20px;margin:6px 0}" +
+          "p{font-size:13px;margin:5px 0;overflow-wrap:anywhere}" +
+          "@media print{body{padding:0}.label{border:1px solid #ddd;border-radius:0}}" +
+          "</style></head><body>" +
+          "<div class='label'>" +
+          "<h2>HMIS</h2>" +
+          "<img src='" + imageUrl + "' alt='Item QR code'>" +
+          "<h2>" + escapeHtml(it.item_id) + "</h2>" +
+          "<p>" + escapeHtml(it.item_name) + "</p>" +
+          "</div></body></html>"
+        );
+        printWindow.document.close();
+
+        window.setTimeout(function () {
+          printWindow.focus();
+          printWindow.print();
+        }, 500);
+      }, 250);
+    };
 
 b.appendChild(qrSection);
   }

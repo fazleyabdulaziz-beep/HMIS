@@ -3,7 +3,25 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>HMIS — Hotel Maintenance Inventory System</title><link rel="stylesheet" href="styles.css">
 </head><body>
-<header><h1>HMIS</h1><small>Hotel Maintenance Inventory System · prototype, dummy data only</small><button id="logout" hidden>Sign out</button></header>
+<header class="app-header">
+  <div class="brand">
+    <div class="brand-mark">H</div>
+    <div class="brand-copy">
+      <h1>HMIS</h1>
+      <small>Hotel Maintenance Inventory System</small>
+    </div>
+  </div>
+
+  <div class="header-actions">
+    <button id="theme-toggle" class="icon-button"
+      type="button" title="Switch theme"
+      aria-label="Switch theme">☀</button>
+
+    <button id="logout" class="logout-button" hidden>
+      Sign out
+    </button>
+  </div>
+</header>
 <main>
   <section id="login" hidden>
     <h2>Sign in to browse inventory</h2>
