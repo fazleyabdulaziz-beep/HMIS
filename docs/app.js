@@ -224,6 +224,48 @@ var API = (window.HMIS_CONFIG || {}).API_URL;
     };
   }
 
+// ---- Load transaction history ----
+function loadHistory() {
+$("hist").hidden = !sess;
+
+if (!sess) return;
+
+["in", "out"].forEach(function (type) {
+  var box = $("h-" + type);
+  box.textContent = "";
+
+  api("history", {
+    type: type,
+    item_id: current.item_id,
+    limit: 10
+  }, true)
+    .then(function (rows) {
+      if (!rows.length) {
+        box.appendChild(el("div", "empty", "No transactions yet."));
+        return;
+      }
+
+      rows.forEach(function (r) {
+        var txt =
+          new Date(r.timestamp).toLocaleString() +
+          " • qty " + r.qty +
+          " • by " + r.staff_id +
+          " • balance " + r.balance_after;
+
+        if (type === "out") {
+          txt += " • " + r.location_used + " / " + r.purpose;
+        }
+
+        box.appendChild(el("div", "row", txt));
+      });
+    })
+    .catch(function (e) {
+      box.appendChild(el("div", "err", e.message));
+    });
+});
+
+}
+
   // ---- Stock form: Staff ID + PIN are entered HERE, at submit time ----
   function field(f, label, name, attrs) {
     var l = el("label", "", label), i = el("input"); i.name = name;
