@@ -222,6 +222,7 @@ var API = (window.HMIS_CONFIG || {}).API_URL;
         }, 500);
       }, 250);
     };
+  }
 
   // ---- Stock form: Staff ID + PIN are entered HERE, at submit time ----
   function field(f, label, name, attrs) {
