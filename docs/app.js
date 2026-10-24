@@ -64,6 +64,88 @@
     b.appendChild(el("p", "", "Item ID: " + it.item_id + " | " + it.category));
     b.appendChild(el("p", "bal " + (it.low_stock ? "low" : "ok"), "Balance: " + it.balance + " " + it.unit + (it.low_stock ? " ⚠ LOW STOCK" : "")));
     b.appendChild(el("p", "", "Minimum stock: " + it.min_stock + " | Location: " + it.location));
+    // ---- QR Code Generator ----
+var qrSection = el("div", "qr-section");
+
+qrSection.appendChild(el("h3", "", "Item QR Code"));
+qrSection.appendChild(
+  el("p", "", "Scan to open this inventory item.")
+);
+
+var qrBox = el("div", "qr-box");
+qrSection.appendChild(qrBox);
+
+var itemUrl = new URL(window.location.href);
+itemUrl.search = "";
+itemUrl.hash = "";
+itemUrl.searchParams.set("item", it.item_id);
+
+if (typeof QRCode !== "undefined") {
+  new QRCode(qrBox, {
+    text: itemUrl.toString(),
+    width: 200,
+    height: 200,
+    correctLevel: QRCode.CorrectLevel.M
+  });
+} else {
+  qrBox.textContent = "QR library unavailable. Check your internet connection.";
+}
+
+qrSection.appendChild(
+  el("p", "", "Item ID: " + it.item_id)
+);
+
+var printBtn = el("button", "primary", "Print QR Label");
+qrSection.appendChild(printBtn);
+
+printBtn.onclick = function () {
+  var printWindow = window.open("", "_blank");
+
+  if (!printWindow) {
+    alert("Please allow pop-ups to print the QR label.");
+    return;
+  }
+
+  var qrImage = qrBox.querySelector("img");
+  var qrCanvas = qrBox.querySelector("canvas");
+  var imageUrl = qrImage
+    ? qrImage.src
+    : qrCanvas
+      ? qrCanvas.toDataURL("image/png")
+      : "";
+
+  if (!imageUrl) {
+    printWindow.close();
+    alert("QR Code is not ready yet.");
+    return;
+  }
+
+  var label = printWindow.document;
+
+  label.open();
+  label.write(
+    "<!doctype html><html><head><title>HMIS QR Label</title>" +
+    "<style>" +
+    "body{font-family:Arial;text-align:center;padding:20px}" +
+    ".label{border:1px solid #ccc;padding:16px;display:inline-block}" +
+    "img{width:200px;height:200px}" +
+    "h2{font-size:18px;margin:8px 0}" +
+    "p{font-size:12px;overflow-wrap:anywhere}" +
+    "@media print{.label{border:none}}" +
+    "</style></head><body>" +
+    "<div class='label'>" +
+    "<h2>HMIS</h2>" +
+    "<img src='" + imageUrl + "'>" +
+    "<h2>" + it.item_id.replace(/[&<>\"']/g, "") + "</h2>" +
+    "<p>" + String(it.item_name).replace(/[&<>\"']/g, "") + "</p>" +
+    "</div>" +
+    "<script>window.onload=function(){setTimeout(function(){window.print()},300)};<\/script>" +
+    "</body></html>"
+  );
+  label.close();
+};
+
+b.appendChild(qrSection);
   }
   function loadHistory() {   // history is protected: shown only if signed in
     $("hist").hidden = !sess; if (!sess) return;

@@ -11,3 +11,28 @@ button:disabled{opacity:.5}label{display:block;margin:8px 0;font-size:.9rem}
 .err{color:#b42318}.msg{min-height:1.2em}.row{background:#fff;border-radius:8px;padding:8px;margin:6px 0;font-size:.85rem}
 #d-actions{display:flex;gap:8px}#form{background:#fff;padding:12px;border-radius:10px;margin:8px 0}
 video{width:100%;border-radius:8px}.empty{color:#666;padding:12px}
+.qr-section {
+  margin-top: 24px;
+  padding: 20px;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  text-align: center;
+}
+
+.qr-box {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 16px auto;
+  min-height: 200px;
+}
+
+.qr-box img,
+.qr-box canvas {
+  max-width: 100%;
+  height: auto;
+}
+
+.qr-section button {
+  margin-top: 12px;
+}
