@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HMIS — Hotel Maintenance Inventory System</title><link rel="stylesheet" href="styles.css">
+</head><body>
+<header><h1>HMIS</h1><small>Hotel Maintenance Inventory System · prototype, dummy data only</small><button id="logout" hidden>Sign out</button></header>
+<main>
+  <section id="login" hidden>
+    <h2>Sign in to browse inventory</h2>
+    <p><small>Scanning an item's QR code needs no sign-in. Sign in is only for searching all items.</small></p>
+    <label>Staff ID<input id="l-id" autocomplete="username" autocapitalize="characters"></label>
+    <label>PIN<input id="l-pin" type="password" inputmode="numeric" autocomplete="current-password"></label>
+    <button id="l-go" class="primary">Sign in</button><p class="msg" id="l-msg"></p>
+  </section>
+  <section id="list" hidden>
+    <input id="q" type="search" placeholder="Search item ID or name" aria-label="Search">
+    <p class="msg" id="list-msg"></p><div id="items"></div>
+  </section>
+  <section id="detail" hidden>
+    <button id="back">Search all items</button>
+    <div id="d-body"></div>
+    <div id="d-actions"><button id="b-in" class="primary">Stock In</button><button id="b-out" class="primary">Stock Out</button></div>
+    <form id="form" hidden novalidate></form>
+    <p class="msg" id="d-msg"></p>
+    <div id="hist" hidden><h3>Recent stock-in</h3><div id="h-in"></div><h3>Recent stock-out</h3><div id="h-out"></div></div>
+  </section>
+</main>
+<script src="config.js"></script><script src="app.js"></script>
+</body></html>
